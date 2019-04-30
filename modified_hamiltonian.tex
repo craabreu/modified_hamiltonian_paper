@@ -134,7 +134,7 @@ This PDF, whose derivation is given in Appendix \ref{sec:momentum and velocity d
 
 \begin{figure}
 	\centering
-	\includegraphics{kinetic_energy_functions}
+	\includegraphics{momentum_functions}
 	\caption{Alternative functions for expressing the momentum dependency of the Hamiltonian.}
 	\label{fig:hamiltonian momentum dependency}
 \end{figure}
@@ -476,13 +476,13 @@ dr_i \\ dp_i
 \end{array}\right] =
 \underbrace{\left[\begin{array}{c}
 v_i dt \\ 0
-\end{array}\right]}_A + 
+\end{array}\right]}_\mathrm{A} + 
 \underbrace{\left[\begin{array}{c}
 0 \\ F_i dt
-\end{array}\right]}_B +
+\end{array}\right]}_\mathrm{B} +
 \underbrace{\left[\begin{array}{c}
 0 \\ -\gamma m_i v_i dt + \sigma_i dW_i
-\end{array}\right]}_O.
+\end{array}\right]}_\mathrm{O}.
 \end{equation}
 
 Hence, the effects of propagators $e^{\delta t \mathcal{L}_A}$ and $e^{\delta t \mathcal{L}_B}$ are a displacement given by $r_i(t+\delta t) = r_i(t) + v_i(t) \delta t$ and an impulse given by $p_i(t+\delta t) = p_i(t) + F_i(t) \delta t$, respectively.
@@ -540,11 +540,11 @@ With the same value of $\xi_i$ as in the $C$ constant, either Eq.~\eqref{eq:Orne
 
 \subsubsection{Splitting-Based Solution of a Perturbed Ornstein-Uhlenbeck Process}
 
-If we define a perturbation function $\hat{z}_i(\hat{p}_i)$ as
+By defining a perturbation function $\hat{z}_i(\hat{p}_i)$ as
 \begin{equation}
 z_i = \sqrt{n} \tanh\left(\frac{\hat{p}_i}{\sqrt{n}}\right) - \hat{p}_i,
 \end{equation}
-then we can rewrite Eq.~\eqref{eq:Langevin equation with new velocity} as
+we can rewrite Eq.~\eqref{eq:Langevin equation with new velocity} as
 \begin{equation}
 \label{eq:Langevin equation with perturbed OU process}
 d\hat{p}_i = \underbrace{- \gamma \hat{p}_i dt + \sqrt{2 \gamma} dW_i}_{OU} - \gamma \hat{z}_i dt.
@@ -594,9 +594,13 @@ By composing the three steps in a single equation, the effect of propagator $e^{
 \hat{p}_i(t+\delta t) = e^{\frac{\gamma \delta t}{2}} \sqrt{n} \arcsinh\left[\sinh\left(\frac{\hat{p}_i(t) e^{\frac{\gamma \delta t}{2}}}{\sqrt{n}}\right) e^{-\gamma \delta t} \right].
 \end{equation*}
 
+Unfortunately, linear analysis is not possible.
+
 \section{Results}
 
 \subsection{Numerical Integration of the Modified Stochastic Propagator}
+
+The fact that 
 
 Order-1.5 Strong It\={o}-Taylor Scheme \cite{Kloeden_1992}
 \begin{multline}
@@ -604,6 +608,12 @@ p_i(t+\delta t) = \hat{p}_i(t) - \hat{v}_i(t) \gamma \delta t + \sqrt{2 \gamma \
 \times \left[ \frac{\sqrt{2 \gamma^3 \delta t^3}}{2}\left(\xi_{i,1} + \frac{\xi_{i,2}}{\sqrt{3}}\right) - \frac{n+2}{2 n} \hat{v}_i(t) \gamma^2 \delta t^2 \right],
 \end{multline}
 
+\begin{figure}
+	\centering
+	\includegraphics{stochastic_integration}
+	\caption{Alternative functions for expressing the momentum dependency of the Hamiltonian.}
+	\label{fig:stochastic integration}
+\end{figure}
 
 
 
@@ -713,44 +723,8 @@ Then, with the aid of Eq.~\eqref{eq:velocity definition}, we can write
 \frac{\dot{\Phi}_i}{\Phi_i} = \frac{\dot{\theta}_i}{\theta_i} + \frac{v_i \dot{p}_i}{kT}.
 \end{equation}
 
-Finally, substitution of $ \dot{p}_i$ and $\dot{\theta}_i$ from Eqs.~\eqref{eq:isokinetic NHC equations p} and \eqref{eq:isokinetic NHC equations theta} clearly show that $\dot{\Phi}_i = 0$.
+Finally, substitution of $ \dot{p}_i$ and $\dot{\theta}_i$ from Eqs.~\eqref{eq:isokinetic NHC equations p} and \eqref{eq:isokinetic NHC equations theta} leads to the conclusion that $\dot{\Phi}_i = 0$.
 
-\section{The Gr{\o}nbech-Jensen \& Farago Integrator as a BAOAB Scheme with Approximate Ornstein-Uhlenbeck Solution}
-
-The Langevin integrator by \citeauthor{Gronbech-jensen_2013} \cite{Gronbech-jensen_2013} (GJF) shows excellent performance at sampling configurations in accordance with the canonical distribution \cite{Jensen_2019, Finkelstein_2019}.
-As \citeauthor{Li_2017} \cite{Li_2017} have pointed out, a fortuitous correspondence with the BAOAB scheme \cite{Leimkuhler_2012, Leimkuhler_2013_2} is responsible for such a remarkable achievement. 
-The method approximates the Langevin equation in its traditional form,
-\begin{align}
-&dr_i = \frac{p_i}{m_i} dt \quad \mathrm{and} \\
-&dp_i = F_i - \gamma p_i + \sigma_i dW_i,
-\end{align}
-by a discrete-time dynamics that can be expressed as
-\begin{align}
-&r_i(t+\timestep) = r_i(t) + \timestep b \left[\frac{p_i(t)}{m_i} + \frac{\timestep}{2} F_i(t) + \frac{\sigma_i}{2} \sqrt{\timestep} R_n \right] \quad \mathrm{and} \\
-&p_i(t+\timestep) = a p_i(t) + \frac{\timestep}{2} \left[a F_i(t) + F_i(t+\timestep)\right] + b \sigma_i \sqrt{\timestep} R_n,
-\end{align}
-where $b = (1+\frac{1}{2}\gamma \timestep)^{-1}$ and $a = b (1-\frac{1}{2}\gamma \timestep)$.
-The equations above are equivalent to the sequence
-\begin{align}
-&p_i(t+\tfrac{\timestep}{2}) = p_i(t) + \tfrac{\timestep}{2} F_i(t), \\
-&r_i(t+\tfrac{\timestep}{2}) = r_i(t) + \tfrac{\timestep}{2 m_i} p_i(t+\tfrac{\timestep}{2}), \\
-&\hat{p}_i(t+\tfrac{\timestep}{2}) = a p_i(t+\tfrac{\timestep}{2}) + b \sigma_i \sqrt{\timestep} R_n, \\
-&r_i(t+\timestep) = r_i(t+\tfrac{\timestep}{2}) + \tfrac{\timestep}{2 m_i} \hat{p}_i(t+\tfrac{\timestep}{2}), \quad \mathrm{and} \\
-&p_i(t+\timestep) = \hat{p}_i(t+\tfrac{\timestep}{2}) + \tfrac{\timestep}{2} F_i(t+\timestep),
-\end{align}
-which matches the BAOAB algorithm except for the form of the equation in the middle.
-In fact, in order to recover the BAOAB sequence, it is sufficient to replace $a$ and $b$ by $a_\mathrm{exact} = e^{-\gamma \timestep}$ and $b_\mathrm{exact} = (\frac{1 - e^{-2 \gamma \timestep}}{2 \gamma \timestep})^\frac{1}{2}$ in such equation.
-The subscript ``exact'' indicates that it would correspond to the exact solution of the Ornstein-Uhlenbeck process.
-With $a$ and $b$, it is an approximate solution
-
-
-
-For all equations but the one in the middle, this sequence is .
-\begin{equation}
-\int_{p_i(t)}^{p_i} dp_i = -\gamma \int_{0}^{t} p_i(t') dt' + \sigma_i \int_{0}^{t} dW_i(t'),
-\end{equation}
-
-
-\bibliography{new_kinetic_energy}
+\bibliography{modified_hamiltonian}
 
 \end{document}
