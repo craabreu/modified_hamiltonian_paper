@@ -73,7 +73,7 @@ leg = ax.legend(
     ncol=3,
     columnspacing=0,
     labelspacing=0.2,
-    title='n=1~~~n=2~~~n=3',
+    title='n=1~~~n=2~~~n=4',
 )
 leg._legend_box.align = "left"
 

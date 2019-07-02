@@ -91,6 +91,7 @@ This allowed us to unveil certain properties of the isokinetic dynamics which re
 More importantly, it became straightforward to devise a new, Langevin-type version of the method with superior performance.
 
 \section{Methods}
+\label{sec:methods}
 
 \subsection{Speed-Limiting Hamiltonian for Isothermal Dynamics}
 
@@ -461,15 +462,14 @@ In the method's name, RESPA refers to the multiple time scale integration of the
 All methods described in the preceding sections are meant to avoid resonance in multiple time-scale (MTS) integration procedures.
 %There are numerous possible ways of devising a multiple time-scale (MTS) integration procedure.
 %However, we adopt here some restraints to avoid excessive intricacy.
-To come up with integrators by using the reference system propagator algorithm (RESPA) \cite{Tuckerman_1992}, we can split the force on each degree of freedom $i$ into a sum of $M$ terms, i.e.
+To come up with numerical integrators by using the reference system propagator algorithm (RESPA) \cite{Tuckerman_1992}, we can split the force on each degree of freedom $i$ into a sum of $M$ terms like
 \begin{equation*}
 F_i = \sum_{k=1}^M F_i^{[k]}.
 \end{equation*}
 
-By convention, the characteristic time scale of each force component increases with index $k$, meaning that $F_i^{[1]}$ is the fastest component while $F_i^{[M]}$ is the slowest one.
+By convention, the characteristic time scale of each component increases with index $k$, meaning that $F_i^{[1]}$ is the fastest component while $F_i^{[M]}$ is the slowest one.
 In the basic RESPA recipe, integration within the largest time scale ($k=M$) is done by executing $n_M$ steps of size $\delta t_M = \Delta t$.
-Internally, every step of size $\delta t_k$, taken at a time scale $k$, involves $n_{k-1}$ substeps of size $\delta t_k/n_{k-1}$ each.
-
+Internally, every step of size $\delta t_k$, taken at time scale $k$, involves $n_{k-1}$ substeps of size $\delta t_k/n_{k-1}$ each.
 In general, coordinate moves are performed at the same time scale of the fastest forces.
 It is possible, though, to factorize them even further, especially if they are interwoven with the handling of extended space variables.
 This is done, for instance, when the coordinate moves are required to follow a geodesic motion along a constrained manifold \cite{Leimkuhler_2016}.
@@ -481,10 +481,10 @@ By writing the equations of motion in an extended space as $\dot{\vt x} = \Liu \
 \Liu = \Liu_\mathrm{A} + \underbrace{\sum_{k=1}^M \Liu_\mathrm{B}^{[k]}}_{\Liu_\mathrm{B}} + \underbrace{\sum_{k=0}^M \Liu_\mathrm{bath}^{[k]}}_{\Liu_\mathrm{bath}},
 \end{equation}
 where $\Liu_\mathrm{A}$ is the only component which entails changes in the particle coordinates,
-$\Liu_\mathrm{B}^{[k]}$ is the only one that depends on the forces labeled with superscript $k$, and
+$\Liu_\mathrm{B}^{[k]}$ is the only one that depends on the forces with superscript $k$, and
 $\Liu_\mathrm{bath}^{[k]}$ entails transformations in particle momenta that depend exclusively on the state of thermostat-related variables.
-Transformations in these variables themselves can occur due to the action of any component in Eq.~\eqref{eq:RESPA Liouville Partition}.
-The propagator representing a relatively general RESPA scheme can be written as a recursive approximation based on the Trotter-Suzuki theorem \cite{Trotter_1959, Suzuki_1976}.
+Transformations in the thermostat variables themselves can occur at any stage.
+A propagator that represents a relatively general RESPA scheme can be written as a recursive approximation based on the Trotter-Suzuki theorem \cite{Trotter_1959, Suzuki_1976}.
 For this, we make
 \begin{subequations}
 \label{eq:RESPA propagator}
@@ -505,7 +505,7 @@ e^{\frac{\delta t}{2 n_k} \Liu_\mathrm{bath}^{[k]}}
 \Big]^{n_k}.
 \end{multline}
 
-Finally, the recursive process comes to an end once we make
+Finally, the recursive process finishes once we make
 \begin{equation}
 \label{eq:RESPA innermost propagator}
 \mathcal{G}_0(\delta t) = e^{\frac{\delta t}{2} \Liu_\mathrm{A}}
@@ -515,22 +515,23 @@ e^{\frac{\delta t}{2} \Liu_\mathrm{A}}.
 \end{subequations}
 
 In this general formulation, one is free to allocate the components of $\Liu_\mathrm{bath}$ throughout the several time scales, provided that $\sum_{k=0}^M \Liu_\mathrm{bath}^{[k]} = \Liu_\mathrm{bath}$.
-For simplicity, however, we only consider cases in which the whole integration is done in a single time scale with selected index $k^\ast$, thus making $\Liu_\mathrm{bath}^{[k]} = 0$ for all $k \neq k^\ast$.
+For simplicity, however, we only consider cases in which the whole integration is done at a single time scale with selected index $k^\ast$, thus making that $\Liu_\mathrm{bath}^{[k]} = 0$ for all $k \neq k^\ast$.
 When $k^\ast \geq 1$, we can conveniently rewrite Eq.~\eqref{eq:RESPA innermost propagator} as $\mathcal{G}_0(\delta t) = e^{\delta t \Liu_\mathrm{A}}$.
-This formulation reproduces the XO-RESPA (extended system outside-RESPA) method introduced by \citeauthor{Martyna_1996} \cite{Martyna_1996} if we make $k^\ast = M$.
-Although it does not fit exactly the XI-RESPA (extended system inside-RESPA) scheme \cite{Martyna_1996}, a close variant XI\textsuperscript{*}-RESPA can be devised by making $k^\ast = 1$.
+This formulation reproduces the XO-RESPA (extended system outside-RESPA) method introduced by \citeauthor{Martyna_1996} \cite{Martyna_1996} when $k^\ast = M$.
+Although the XI-RESPA (extended system inside-RESPA) scheme \cite{Martyna_1996} does not fit exactly into it, a close variant XI\textsuperscript{*}-RESPA can be devised by making $k^\ast = 1$.
 
-Both XO-RESPA and XI-RESPA can be considered as MTS generalizations of a scheme in which a Velocity Verlet step is surrounded by half-step integrations of the thermostat variables.
-\citeauthor{Zhang_2017} \cite{Zhang_2017} have compared the performance of this single time scale method, which they referred to as the ``side'' scheme, with those of other alternatives.
+Both XO-RESPA and XI-RESPA can be considered as MTS generalizations of a single time scale (STS) scheme in which a Velocity Verlet step is surrounded by half-step, thermostat-induced variations of momenta.
+\citeauthor{Zhang_2017} \cite{Zhang_2017} have compared the performance of this STS method, which they referred to as the ``side'' scheme, with those of other alternatives.
 One of these, called the ``middle'' scheme, can be generalized to the MTS case if we simply make $k^\ast = 0$.
-This is an important advantage of the general formula of Eq.~\eqref{eq:RESPA propagator}.
-Note that, in this case, the thermostat-variable integration is surrounded by coordinate moves.
-In this way, thermostat-induced changes in the particle momenta acquire a more direct influence on the resulting new coordinates at every step.
+This is an important advantage of the general formulation of Eq.~\eqref{eq:RESPA propagator}.
+Note that, in this case, the thermostat-induced integration of momenta is surrounded by coordinate moves.
+In this way, the thermostat acquires a more direct influence on the resulting new coordinates at every step.
 As \citeauthor{Zhang_2017} observed, this tends to produce better coordinate sampling when compared to the more traditional side scheme \cite{Zhang_2017}.
-This means that ensemble averages of coordinate-related properties become less affected by an increase in the time step size.
-Such a tendency had been previously noticed for Langevin thermostats with the related BAOAB method \cite{Leimkuhler_2012, Leimkuhler_2013_2}, but the new study extended the observation to other stochastic as well as deterministic algorithms.
+Ensemble averages of coordinate-related properties become less affected by an increase in the time step size.
+Such an improvement had been previously noticed for Langevin thermostats with the related BAOAB method \cite{Leimkuhler_2012, Leimkuhler_2013_2}, but the new study extended the observation to other stochastic as well as deterministic algorithms.
 \citeauthor{Zhang_2017} \cite{Zhang_2017} also noted that, like BAOAB, the middle scheme degrades the sampling of momenta with respect to reproducing the theoretical probability distribution at the specified temperature.
-In the middle-RESPA case, the numerical propagator simplifies to
+
+We can generalize the middle scheme to a MTS framework, which we refer to as middle-RESPA, by simplifying the numerical propagator in Eq.~\eqref{eq:RESPA scheme 1} to
 \begin{subequations}
 \begin{equation*}
 \label{eq:middle RESPA scheme 1}
@@ -540,7 +541,7 @@ e^{\frac{\delta t}{2 n_k} \Liu_\mathrm{B}^{[k]}}
 e^{\frac{\delta t}{2 n_k} \Liu_\mathrm{B}^{[k]}}
 \Big]^{n_k}
 \end{equation*}
-for $k \in [1, M]$ and %$\mathcal{G}_0^\mathrm{mid}(\delta t) = e^{\frac{\delta t}{2} \Liu_\mathrm{A}} e^{\delta t \Liu_\mathrm{bath}} e^{\frac{\delta t}{2} \Liu_\mathrm{A}}$.
+and that in Eq.~\eqref{eq:RESPA innermost propagator} to
 \begin{equation*}
 \label{eq:middle RESPA innermost propagator}
 \mathcal{G}_0^\mathrm{middle}(\delta t) = e^{\frac{\delta t}{2} \Liu_\mathrm{A}}
@@ -555,38 +556,41 @@ In all cases considered here, we have
 \mathcal{L}_\mathrm{B}^{[k]} = \sum_{i=1}^{N_f} F^{[k]}_i \diff{p_i}{}.
 \end{equation*}
 
-Thus, the effects of propagators $e^{t \mathcal{L}_\mathrm{A}}$ and $e^{t \mathcal{L}_\mathrm{B}^{[k]}}$ can be respectively expressed as $r_i = r_{i, 0} + v_{i, 0} t$ and $p_i = p_{i, 0} + F_i(\vt r_0) t$ for all $i$, where subscript $0$ stands for initial condition.
+Thus, the effects of propagators $e^{t \mathcal{L}_\mathrm{A}}$ and $e^{t \mathcal{L}_\mathrm{B}^{[k]}}$ can be respectively expressed as $r_i = r_{i, 0} + v_{i, 0} t$ and $p_i = p_{i, 0} + F_i^{[k]}(\vt r_0) t$ for all $i$, where subscript $0$ denotes the initial condition encountered by the propagator and $t$ corresponds to the time span of its action.
+
 The effect of propagator $e^{t \Liu_\mathrm{bath}}$ will differ from case to case.
-Let us focus on the two Nos\'{e}-Hoover-Langevin strategies described in Sec.~\ref{sec:nose-hoover-langevin}.
-First, considering the equations of motion in Eq.\eqref{eq:NHL equations}, we carry out a Trotter-Suzuki splitting $e^{\delta t \Liu_\mathrm{bath}} = e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{S}} e^{\delta t \mathcal{L}_\mathrm{O}} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{S}}$, where $\mathcal{L}_\mathrm{S} = - \sum_{i=1}^{N_f} v_{\eta_{1,i}} p_i \diff{p_i}{}$ alone produces the deterministic system
-\begin{align*}
-&\dot{r}_i = 0, \\
-&\dot{p}_i = - v_{\eta_{1,i}} m_i v_i, \quad \mathrm{and} \\
-&\dot{v}_{\eta_{1,i}} = 0,
-\end{align*}
-while $\mathcal{L}_\mathrm{O}$ generates a forced Ornestein-Uhlenbeck process defined by the stochastic system
-\begin{align*}
-&dr_i = 0, \\
-&dp_i = 0, \quad \mathrm{and} \\
-&dv_{\eta_{1, i}} = \frac{v_i p_i - kT}{Q}dt - \gamma v_{\eta_{1, i}}dt + \sigma_i dW_i.
-\end{align*}
-
-For the first equation system, the solution (and corresponding exact effect of propagator $e^{t \mathcal{L}_\mathrm{S}}$) is a momentum scaling given by
+Let us focus on the two Nos\'{e}-Hoover-Langevin (NHL) strategies described in Sec.~\ref{sec:nose-hoover-langevin}.
+First, by considering the equations of motion in Eq.~\eqref{eq:NHL equations}, we carry out a splitting
 \begin{equation*}
-p_i = p_{i,0} e^{-v_{\eta_{1,i,0}} t}.
+e^{\delta t \Liu_\mathrm{bath}} = e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{kick}} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{scale}} e^{\delta t \mathcal{L}_\mathrm{OU}} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{scale}} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{kick}},
+\end{equation*}
+which is the same one described elsewhere \cite{Leimkuhler_2015} for the standard NHL method.
+Here, $\mathcal{L}_\mathrm{kick} = - \sum_{i=1}^{N_f} \frac{v_i p_i - kT}{Q} \diff{v_{\eta_{1,i}}}{}$, which alone produces the deterministic equations $\dot{r}_i = 0$, $\dot{p}_i = 0$, and $\dot{v}_{\eta_{1,i}} = \frac{1}{Q}(v_i p_i - kT)$, whose solution is
+\begin{equation*}
+v_{\eta_{1,i}} = v_{\eta_{1,i,0}} + \frac{v_{i,0} p_{i,0} - kT}{Q} t,
+\end{equation*}
+while both $r_i$ and $p_i$ remain constant.
+In turn, operator $\mathcal{L}_\mathrm{scale} = - \sum_{i=1}^{N_f} v_{\eta_{1,i}} p_i \diff{p_i}{}$ alone produces the deterministic system $\dot{r}_i = 0$, $\dot{p}_i = - v_{\eta_{1,i}} p_i$, and $\dot{v}_{\eta_{1,i}} = 0$, whose solution is a momentum scaling given by
+\begin{equation*}
+p_i = p_{i,0} e^{-v_{\eta_{1,i,0}} t},
+\end{equation*}
+where $r_i$ and $v_{\eta_{1,i}}$ are kept unaltered.
+Finally, operator $\mathcal{L}_\mathrm{OU}$ generates an Ornestein-Uhlenbeck process defined by the SDE system $dr_i = 0$, $dp_i = 0$, and
+\begin{equation*}
+dv_{\eta_{1, i}} = - \gamma v_{\eta_{1, i}}dt + \sigma_i dW_i.
 \end{equation*}
 
-From the second system, in turn, the effect of propagator $e^{t \mathcal{L}_\mathrm{O}}$ is obtained as
+Therefore, the effect of propagator $e^{t \mathcal{L}_\mathrm{OU}}$ is evaluated by keeping $r_i$ and $p_i$ constant while making
 \begin{equation*}
-v_{\eta_{1, i}} = g_i (1 - e^{-\gamma t})
-+ v_{\eta_{1,i,0}} e^{-\gamma t} + \sqrt{\tfrac{kT}{Q}(1 - e^{-2\gamma t})} \xi_i,
+v_{\eta_{1, i}} = v_{\eta_{1,i,0}} e^{-\gamma t} + \sqrt{\tfrac{kT}{Q}(1 - e^{-2\gamma t})} \xi_i,
 \end{equation*}
-where $\xi_i$ is an independent random variate distributed according to a standard normal probability density and $g_i = \frac{1}{Q}(v_{i,0} p_{i,0} - kT)$ is a constant force.
+where $\xi_i$ is an independent random variate distributed according to a standard normal probability density.
 
-All these propagators are straightforward to implement once a computer code is available for computing the force components at every time scale.
-In practice, it is often necessary to bound the values of $p_i$ in order to avoid numerical overflow, especially in the case of a very large external time step $\Delta t$.
-Here we prepare our codes to make $p_i = \pm 15 \sqrt{n m_i kT}$ whenever the magnitude of $p_i$ exceeds this value, which can happen sporadically due to spuriously large interactions.
-As one can infer from Fig.~\ref{fig:momentum distributions and velocity definition}, it is extremely unlikely that such a large departure from the mean occurs genuinely.
+Implementing all these propagators is straightforward once a computer code is available for computing the force components at every time scale.
+Our observation is that, in practice, it is often necessary to enforce limits for $p_i$ in order to avoid numerical overflow.
+It is especially so in the case of a very large external time step $\Delta t$ and in the presence of steep repulsive potentials like the Lennard-Jones model.
+Here we prepare our codes to make $\pm p_i = 15 \sqrt{n m_i kT}$ whenever the magnitude of $p_i$ exceeds this value, which can happen sporadically due to spuriously large interactions.
+As one can infer from Fig.~\ref{fig:momentum distributions and velocity definition}, it is extremely unlikely that such a large departure from the mean occurs naturally.
 
 %\begin{gather*}
 %\mathcal{L}_\mathrm{A} = \sum_{i=1}^{N_f} v_i \diff{r_i}{} \\
@@ -597,30 +601,39 @@ As one can infer from Fig.~\ref{fig:momentum distributions and velocity definiti
 %\mathcal{L}_\mathrm{DOU}^\ast = \sum_{i=1}^{N_f} \frac{\frac{\nn+1}{\nn} m_i v_i^2 - kT}{Q} \diff{v_{\eta_{1, i}}}{} + \mathcal{L}_\mathrm{OU}
 %\end{gather*}
 
-We now turn the attention to the simplified version of the SIN(R) method expressed in Eq.~\eqref{eq:SIN(R) equations}.
-In this case we make $e^{\delta t \Liu_\mathrm{bath}} = e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{S}^\ast} e^{\delta t \mathcal{L}_\mathrm{O}^\ast} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{S}^\ast}$, very similarly to the integration method described above.
-The only difference between the effect of propagator $e^{t \mathcal{L}_\mathrm{O}^\ast}$ and that of its counterpart is in the calculation of the force, which is now given by $g_i^\ast = \frac{1}{Q}(\frac{\nn+1}{\nn} m_i v_{i,0}^2 - kT)$.
-In the case of propagator $e^{t \mathcal{L}_\mathrm{S}^\ast}$, its effect can be obtained by solving
+We now turn the attention to the SIN(R) method's version expressed in Eq.~\eqref{eq:SIN(R) equations}.
+In this case we make
+\begin{equation*}
+e^{\delta t \Liu_\mathrm{bath}} = e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{kick}^\ast} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{scale}^\ast} e^{\delta t \mathcal{L}_\mathrm{OU}} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{scale}^\ast} e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{kick}^\ast},
+\end{equation*}
+very similarly to the integration method described above.
+The only difference between the effect of propagator $e^{\frac{\delta t}{2} \mathcal{L}_\mathrm{kick}^\ast}$ and that of its earlier counterpart is in the calculation of the driving force.
+The solution is now
+\begin{equation*}
+v_{\eta_{1,i}} = v_{\eta_{1,i,0}} + \frac{\frac{\nn+1}{\nn} m_i v_{i,0}^2 - kT}{Q} t.
+\end{equation*}
+
+In the case of propagator $e^{t \mathcal{L}_\mathrm{scale}^\ast}$, its effect can be obtained by solving
 \begin{equation*}
 \frac{d \hat{p}_i}{d t} = - v_{\eta_{1,i}} \sqrt{\nn} \tanh\left(\frac{\hat{p}_i}{\sqrt{\nn}}\right),
 \end{equation*}
-where $\hat{p}_i = \frac{p_i}{\sqrt{m_i kT}}$ is a reduced momentum and $v_{\eta_{1,i}}$ is considered to be constant.
-Since $\cosh x dx = d \sinh x$ and $\cosh x \tanh x = \sinh x$, the solution turns out to be a scaling of $\sinh\left({\hat{p}_i}/{\sqrt{\nn}}\right)$.
+where $\hat{p}_i = \frac{p_i}{\sqrt{m_i kT}}$ is a reduced momentum and $v_{\eta_{1,i}}$ is to be considered as a constant.
+Since $\cosh x dx = d \sinh x$ and $\cosh x \tanh x = \sinh x$, the solution turns out to be a scaling of $\sinh\left({\hat{p}_i}/{\sqrt{\nn}}\right)$ instead of $\hat{p}_i$ itself.
 Therefore,
 \begin{equation}
 \label{eq:hyperbolic sine scaling}
 \hat{p}_i = \sqrt{\nn} \arcsinh\left[\sinh \left(\frac{\hat{p}_{i,0}}{\sqrt{\nn}}\right) e^{-v_{\eta_{1,i}} t}\right].
 \end{equation}
 
-It is also possible to express the solution above in terms of velocities.
-After simplification by means of hyperbolic function identities, the final expression is
+It is also possible to express the solution above in terms of velocity.
+After simplification by hyperbolic function identities, the final expression is
 \begin{equation}
 \label{eq:velocity scaling and renormalization}
 v_i = \frac{v_{i,0} e^{-v_{\eta_{1,i}} t}}{\sqrt{\frac{\nn kT}{m_i} - v_{i,0}^2 + \left(v_{i,0} e^{- v_{\eta_{1,i}} t}\right)^2}}.
 \end{equation}
 
 This can be interpreted as a velocity scaling followed by renormalization, thus guaranteeing that the final result will lie in the allowable range.
-We note that using Eq.~\eqref{eq:velocity scaling and renormalization}, together with the required transformations from $p_i$ to $v_i$ and back, is numerically more stable than using Eq.~\eqref{eq:hyperbolic sine scaling}.
+We observe that using Eq.~\eqref{eq:velocity scaling and renormalization}, together with the required transformations from $p_i$ to $v_i$ and back, is in general more stable numerically than using Eq.~\eqref{eq:hyperbolic sine scaling}.
 %Because Eq.~\eqref{eq:isokinetic NHC equations p} is the only one in the corresponding system which directly involves the momentum $p_i$, using the equation above in the numerical integration eliminates the need to compute and store $\vt p$ altogether.
 
 Integration of the deterministic equations of motion of Secs.~\ref{sec:massive NHC thermostatting} and \ref{sec:modified NHC thermostatting} follow similar procedures in which $e^{t \Liu_\mathrm{bath}}$ corresponds to the NHC integration method described, for instance, in Ref.~\citenum{Martyna_1996}.
@@ -630,10 +643,11 @@ Integration of the deterministic equations of motion of Secs.~\ref{sec:massive N
 The step required to evolve from the Isokinetic NHC method \cite{Minary_2004} to the SIN(R) method \cite{Leimkuhler_2013} is the same one involved in going from the original NHC algorithm \cite{Martyna_1992, Martyna_1996} to the NHL approach \cite{Samoletov_2007, Leimkuhler_2009}.
 It consists in attaching a stochastic thermostat, instead of a chain of deterministic ones, to the Nos\'{e}-Hoover device that controls the temperature of the physical system.
 Taking one step further, we can eliminate the mediation altogether and attach a stochastic thermostat directly to each physical degree of freedom.
-In the case of a traditional Hamiltonian, this leads to the well-known Langevin dynamics.
-Here we test how using this approach, but with a speed-limiting Hamiltonian instead, compares to the previous methods in its ability to cope with resonance artifacts.
+In the case of a traditional Hamiltonian, this leads to the Langevin dynamics.
+Here we explore the use of this approach with a speed-limiting Hamiltonian instead.
+We test how it compares to the previous methods in its ability to sample the correct ensemble and cope with resonance artifacts.
 
-By following \citeauthor{Stoltz_2018} \cite{Stoltz_2018}, who considered the general case in which the kinetic energy part of a separable Hamiltonian is replaced by another function of momenta, we write down a SDE system for each degree of freedom $i$ as
+By following \citeauthor{Stoltz_2018} \cite{Stoltz_2018}, who considered the general case in which the kinetic part of a separable Hamiltonian is replaced by another function of the momenta, we write down a SDE system for each degree of freedom $i$ as
 \begin{subequations}
 	\label{eq:Langevin equations}
 	\begin{align}
@@ -641,20 +655,22 @@ By following \citeauthor{Stoltz_2018} \cite{Stoltz_2018}, who considered the gen
 	&dp_i = F_i dt - \gamma m_i v_i dt + \sigma_i dW_i,
 	\end{align}
 \end{subequations}
-with $\sigma_i = \sqrt{2 \gamma m_i kT}$ and $v_i$ is a function of $p_i$ such as defined in Eq.~\eqref{eq:velocity definition}.
-The Gibbs-Boltzmann probability density function $\rho(\vt r, \vt p) = {Z}^{-1} e^{-\frac{\mathcal{H}_n(\vt r, \vt p)}{kT}}$ is a stationary distribution of the SDE system above because it satisfies the Fokker-Planck equation \cite{Leimkuhler_2015}
+where $\sigma_i = \sqrt{2 \gamma m_i kT}$ and $v_i$ is the function of $p_i$ defined in Eq.~\eqref{eq:velocity definition}.
+The Gibbs-Boltzmann probability density $\rho(\vt r, \vt p) = {Z}^{-1} e^{-\frac{\mathcal{H}_n(\vt r, \vt p)}{kT}}$ is a stationary distribution of the SDE system above.
+It satisfies the Fokker-Planck equation \cite{Leimkuhler_2015}
 \begin{equation}
 \diff{t}{\rho} = -i\!L \rho + \sum_{i=1}^{N_f} \left[ \gamma m_i \diff{p_i}{}(\rho v_i) + \frac{\sigma_i^2}{2} \diff{p_i^2}{^2 \rho} \right],
 \end{equation}
-where $i\!L$ is the Liouville operator corresponding to the modified Hamiltonian, for which $i\!L \mathcal{H}_n = 0$ \cite{Tuckerman_2010}.
-This is so because $\diff{t}{\rho} = 0$, since there is no explicit dependence on time, and $i\!L \rho = -\frac{\rho}{kT}i\!L \mathcal{H}_n = 0$.
-In addition, after evaluating the remaining derivatives, we end up with
+where $i\!L$ is the Liouville operator corresponding to the modified Hamiltonian.
+We note that $i\!L \mathcal{H}_n = 0$ \cite{Tuckerman_2010}, which makes $i\!L \rho = -\frac{\rho}{kT}i\!L \mathcal{H}_n = 0$ as well.
+%Since there is no explicit dependence on time, $\diff{t}{\rho} = 0$.
+In addition, after evaluating the derivatives inside the square brackets, we end up with
 \begin{equation}
-\rho \sum_{i=1}^{N_f} \left[ \left(-\gamma m_i + \frac{\sigma_i^2}{2 kT}\right) \left(\frac{v_i^2}{kT} - \frac{d v_i}{d p_i}\right) \right] = 0,
+\diff{t}{\rho} = \rho \sum_{i=1}^{N_f} \left[ \left(-\gamma m_i + \frac{\sigma_i^2}{2 kT}\right) \left(\frac{v_i^2}{kT} - \frac{d v_i}{d p_i}\right) \right],
 \end{equation}
-which is identically satisfied since $\sigma_i^2 = 2 \gamma m_i kT$.
+which is identically satisfied since $\sigma_i^2 = 2 \gamma m_i kT$ and $\rho$ is independent of time.
 
-There are several numerical methods available in the literature for solving the standard Langevin equation, in which $v_i(p_i) = p_i/m_i$.
+There are several numerical methods available in the literature for solving the standard Langevin equation, in which $v_i = p_i/m_i$.
 However, adjustment is required for them to become usable for solving Eq.~\eqref{eq:Langevin equations}.
 We select the BAOAB integrator \cite{Leimkuhler_2012, Leimkuhler_2013_2} as our starting point due to its outstanding efficiency in reproducing canonical statistics of configurations, termed as a superconvergence property \cite{Leimkuhler_2012}.
 In the single time-scale case, it consists in applying, at each time step of size $\delta t$, a split propagator defined as
@@ -826,7 +842,82 @@ p_i = \hat{p}_{i,0} - \hat{v}_{i,0} \gamma t + \sqrt{2 \gamma t} \xi_{i,1} - \le
 	\label{fig:stochastic integration}
 \end{figure}
 
-\subsection{Resonance Control in Multiple Time Step Integration of Harmonic Oscillator Dynamics}
+\subsection{Resonance Control in Multiple Time Scale Integration of Coupled Harmonic Oscillators}
+
+In this section, we consider a simple resonant system in order to compare the performance of the several methods described throughout Sec.~\ref{sec:methods}.
+It is composed of two bodies of equal mass attached to each other by a stiff spring, at the same time as both are attached to fixed walls by softer springs, such as depicted in Fig.~\ref{fig:coupled harmonic oscillators}.
+In a proper coordinate frame, the potential energy of this system is
+\begin{equation*}
+U(r_1, r_2) = \frac{\kappa_\mathrm{soft}}{2} r_1^2 + \frac{\kappa_\mathrm{stiff}}{2} (r_1 - r_2)^2 + \frac{\kappa_\mathrm{soft}}{2} r_2^2.
+\end{equation*}
+
+\begin{figure}
+	\includegraphics[width=0.9\hsize]{coupled_oscillators}
+	\caption{Coupled Harmonic Oscillators}
+	\label{fig:coupled harmonic oscillators}
+\end{figure}
+
+The same equation can be expressed in matrix notation as $U(\vt r) = \frac{1}{2} \tr{\vt r} \mt K \vt r$, where $\vt r = [\substack{r_1 \\ r_2}]$ and
+\begin{equation*}
+{\mt K} = \begin{bmatrix}
+\kappa_\mathrm{soft} + \kappa_\mathrm{stiff} & -\kappa_\mathrm{stiff} \\
+-\kappa_\mathrm{stiff} & \kappa_\mathrm{soft} + \kappa_\mathrm{stiff}
+\end{bmatrix}.
+\end{equation*}
+
+Matrix $\mt K$ is symmetric and positive-definite once both $\kappa_\mathrm{stiff}$ and $\kappa_\mathrm{soft}$ are positive.
+This enables its diagonalization (eigendecomposition) in the form of ${\mt K} = {\vt V} {\mt D} \tr{\mt V}$, where
+\begin{equation*}
+{\mt D} = 
+\begin{bmatrix}
+\kappa_\mathrm{soft} + 2\kappa_\mathrm{stiff} & 0 \\
+0 & \kappa_\mathrm{soft}
+\end{bmatrix}
+\quad \mathrm{and} \quad
+{\mt V} = \frac{\sqrt{2}}{2}
+\begin{bmatrix}
+-1 & 1 \\
+1 & 1
+\end{bmatrix}.
+\end{equation*}
+
+If we define transformed coordinates by $\vt s = \tr{\mt V}{\vt r}$, then we have that $U(\vt s) = \frac{1}{2} \tr{\vt s} \mt D \vt s$.
+This is the potential energy of a system of independent harmonic oscillators with constants $\kappa_1 = \kappa_\mathrm{soft} + 2\kappa_\mathrm{stiff}$ and $\kappa_2 = \kappa_\mathrm{soft}$.
+This means that $s_1 = \frac{\sqrt{2}}{2} (r_2 - r_1)$ and $s_2 = \frac{\sqrt{2}}{2} (r_1 + r_2)$ are the normal modes of vibration of this system, whose natural periods of oscillation are given by
+\begin{equation}
+\tau_1 = 2\pi\sqrt{\frac{m}{\kappa_\mathrm{soft} + 2\kappa_\mathrm{stiff}}}
+\quad \mathrm{and} \quad
+\tau_2 = 2\pi\sqrt{\frac{m}{\kappa_\mathrm{soft}}},
+\end{equation}
+respectively. Therefore, the excess elongation $r_2 - r_1$ vibrates with a short period (high frequency), while the center-of-mass position $\frac{r_1 + r_2}{2}$ vibrates with a long period (low frequency).
+
+In order to have a given ratio $\frac{\tau_2}{\tau_1} = L$, the stiffnesses of the springs in Fig.~\ref{fig:coupled harmonic oscillators} must be
+\begin{equation*}
+\kappa_\mathrm{soft} = 	\frac{4\pi^2 m}{\tau_2^2}
+\quad \mathrm{and} \quad
+\kappa_\mathrm{stiff} = 2\pi^2 m \left(\frac{1}{\tau_1^2} - \frac{1}{\tau_2^2}\right).
+\end{equation*}
+
+
+Let us define $m = 1$ and $\tau_1 = 1$ as the reference units of mass and time, respectively.
+In this case, in order to have $\tau_2 = L$, 
+
+
+\begin{align*}
+U(r_1, r_2, r_3) &= \frac{\kappa_\mathrm{soft}}{2} r_1^2 + \frac{\kappa_\mathrm{stiff}}{2} [(r_2 - r_1)^2 + (r_3 - r_2)^2] + \frac{\kappa_\mathrm{soft}}{2} r_3^2 = \\
+&= \frac{\kappa_\mathrm{soft}}{2} r_1^2 + \frac{\kappa_\mathrm{stiff}}{2} [(r_2^2 - 2 r_1 r_2 + r_1^2) + (r_3^2 - 2r_2 r_3 + r_2^2)] + \frac{\kappa_\mathrm{soft}}{2} r_3^2
+\end{align*}
+
+Thus,
+\begin{equation*}
+{\mt K} = \begin{bmatrix}
+\kappa_\mathrm{soft} + \kappa_\mathrm{stiff} & -\kappa_\mathrm{stiff} & 0 \\
+-\kappa_\mathrm{stiff} & 2 \kappa_\mathrm{stiff} & -\kappa_\mathrm{stiff} \\
+0 & -\kappa_\mathrm{stiff} & \kappa_\mathrm{soft} + \kappa_\mathrm{stiff}
+\end{bmatrix}
+\end{equation*}
+
+
 
 \begin{figure}
 	\centering
